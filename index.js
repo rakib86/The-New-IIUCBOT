@@ -781,10 +781,8 @@ async function getGitHubRepoContents(path) {
         },
       }
     );
-    console.log('GitHub API Response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('GitHub API Error:', error);
     throw error;
   }
 }
