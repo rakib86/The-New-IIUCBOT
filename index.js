@@ -34,7 +34,7 @@ const intents = [
 
 
   const token = process.env.BOT_TOKEN;
-  const webhookUrl = `https://iiuc-bot.onrender.com/webhook/${token}`;
+  const webhookUrl = `https://iiucbot-new-version.onrender.com/webhook/${token}`;
   const bot = new TelegramBot(token, { webHook: { port: port } });
   
   
