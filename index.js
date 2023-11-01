@@ -27,9 +27,13 @@ app.listen(port, () => {
 });
 const bot = new TelegramBot(botToken, { polling: false });
 bot.setWebHook('https://iiucbot-new-version.onrender.com/' + botToken);
+app.listen(port, () => {
+  console.log(`Web server is running on port ${port}`);
+});
 
 
 ///Web Service part end
+
 const GOOGLE_SEARCH_API_KEY = process.env.google_api_key;
 const GOOGLE_SEARCH_ENGINE_ID = process.env.google_id;
 const { google } = require('googleapis');
