@@ -7,6 +7,21 @@ module.exports = {
       }else{
         return '';
       }
+
+
+      if (userInput.includes('regular') && userInput.includes('bus')) {
+        return 'Bus/Regular Bus Schedule';
+      }else if (userInput.includes('friday') && userInput.includes('bus')) {
+        return 'Bus/Friday Bus Schedule';
+      }else if (userInput.includes('teacher') && userInput.includes('bus')) {
+        return 'Bus/Exam Bus Schedule';
+      }else if (userInput.includes('bus')) {
+        return 'Bus';
+      }
+
+
+
+      
  
       if (userInput.includes('1st') && userInput.includes('mid') && userInput.includes('question')) {
         return '1st/Prev-All-Question/Mid-Yearly-Questions';
@@ -107,15 +122,7 @@ module.exports = {
     }
     
 
-      if (userInput.includes('regular') && userInput.includes('bus')) {
-        return 'Bus/Regular Bus Schedule';
-      }else if (userInput.includes('friday') && userInput.includes('bus')) {
-        return 'Bus/Friday Bus Schedule';
-      }else if (userInput.includes('teacher') && userInput.includes('bus')) {
-        return 'Bus/Exam Bus Schedule';
-      }else if (userInput.includes('bus')) {
-        return 'Bus';
-      }
+      
     },
   };
   // if (userInput.includes('1st') && userInput.includes('mid')) {
