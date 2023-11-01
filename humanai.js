@@ -44,6 +44,7 @@ module.exports = {
       { regex: /^(?=.*\b(have|got|had|has|can)\b)(?=.*\b(sono|heda|nono|boda|sonu|soiya|soyya|eda)\b)/i, type: "text", text: "I got one bigger than you🍌😎" },
       { regex: /^(?=.*\b(magi|maagi)\b)/i, type: "text", text: "You dont have the product🍌, so next time!" },
   
+      
       { regex: /^(?=.*\b(your|you)\b)(?=.*\b(name)\b)/i, type: "text", text: "My name is IIUC Bot. How can I help you today?",  },
       { regex: /^(?=.*\b(shut|fuck)\b)(?=.*\b(up|off|down)\b)/i, type: "text", text: "Ok Man ! 🫵🐕" },
       { regex: /^(?=.*\b(how)\b)(?=.*\b(are)\b)(?=.*\b(you)\b)/i, type: "text", text: "I'm just a friendly AI bot, so I don't have feelings, but I'm here to chat and have fun with you!",  },
