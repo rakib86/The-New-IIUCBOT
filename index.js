@@ -9,24 +9,42 @@ const waitingSticker = 'https://t.me/botresourcefordev/341';
 const botToken = process.env.BOT_TOKEN;
 const githubToken = process.env.GITHUB_ACCESS_TOKEN;
 const githubRepoURL = 'https://api.github.com/repos/rakib86/IIUCbot-DataBase';
-
-
+const express = require('express');
+const bodyParser = require('body-parser');
+const app = express();
+const port = process.env.PORT || 3000; 
 
 
 
 
 //Render Web Service part
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
+// Replace with your bot token
+// Replace with your bot token
+const token = process.env.BOT_TOKEN;
+const webhookUrl = `https://iiucbot-new-version.onrender.com/webhook/${token}`;
+const bot = new TelegramBot(token, { webHook: { port: port } });
+
+
+
+
+// This sets up the URL for receiving updates
+bot.setWebHook(webhookUrl);
+
+// Use body-parser middleware to parse incoming JSON
 app.use(bodyParser.json());
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Telegram bot server is running on port ${port}`);
+
+// Handle incoming updates via POST requests
+app.post(`/webhook/${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
 });
-const bot = new TelegramBot(botToken, { polling: false });
-bot.setWebHook('https://iiucbot-new-version.onrender.com/' + botToken);
+
+// Start the web server
+app.listen(port, () => {
+  console.log(`Web server is running on port ${port}`);
+});
+
 
 
 ///Web Service part end
