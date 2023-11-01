@@ -370,6 +370,42 @@ bot.onText(/\/broadcastimg$/, (msg) => {
   
   
 
+//Broadcast Pool
+let forwardedPollMessage = null;
+
+bot.onText(/\/broadcastpool$/, (msg) => {
+  const chatId = msg.chat.id;
+  const adminUsername = msg.from.username;
+
+  if (adminUsername === Adminusername) {
+    bot.sendMessage(chatId, 'Please forward the poll message you want to broadcast.');
+
+    // Listen for the forwarded message
+    bot.once('poll', async (msg) => {
+      forwardedPollMessage = msg;
+
+      // Get user data from Google Sheets
+      const userData = await getFromGoogleSheets();
+
+      // Forward the poll message to all users
+      for (const user of userData) {
+        bot.forwardMessage(user.userId, msg.chat.id, msg.message_id);
+      }
+
+      bot.sendMessage(chatId, 'Broadcasted poll to all users.');
+
+      // Clear the forwarded message to avoid re-broadcasting
+      forwardedPollMessage = null;
+    });
+  } else {
+    bot.sendMessage(chatId, 'You are not authorized to use this command.');
+  }
+});
+
+
+
+
+
 //Live User Number 
 
 let dynamicUserCount = 0;
@@ -610,9 +646,12 @@ bot.on('message', async (msg) => {
         intentflag = false;
     }
 
-    if (!text.startsWith('/') && intentflag === false) {
+    if (text){
+      if (!text.startsWith('/') && intentflag === false) {
         bot.sendMessage(chatId, 'Sorry Bro! I dont have any matterial for this question.');
     }
+    }
+   
    
    
     
