@@ -10,7 +10,6 @@ const botToken = process.env.BOT_TOKEN;
 const githubToken = process.env.GITHUB_ACCESS_TOKEN;
 const githubRepoURL = 'https://api.github.com/repos/rakib86/IIUCbot-DataBase';
 
-const app = express();
 const port = process.env.PORT || 3000; 
 const GOOGLE_SEARCH_API_KEY = process.env.google_api_key;
 const GOOGLE_SEARCH_ENGINE_ID = process.env.google_id;
