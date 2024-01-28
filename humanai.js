@@ -2,6 +2,25 @@
 
 module.exports = {
     additionalIntents: [
+{ regex: /^(?=.*\b(link)\b)/i, type: 'text', text: `আল্লাহ আমাদের হেফাজত করুক,  বলুন আমিন` },
+{ regex: /^(?=.*\b(okay)\b)/i, type: 'text', text: `Thanks Bro ! 😊` },
+{ regex: /^(?=.*\b(download)\b)(?=.*\b(youtube)\b)/i, type: 'text', text: `Just give me the YouTube video link,and I'll download the video for you here. 😶‍🌫️
+
+Note: Dont send Playlists link😵‍💫.` },
+
+      {
+        regex: /^(?=.*\b(danda|gand)\b)/i,
+       
+        files: [
+          {
+            type: "audio",
+            text: "HelloWorld.cpp",
+            postLink: "https://t.me/botresourcefordev/374",
+          },
+        ],
+      },
+
+
 {
       regex: /^(?=.*\b(heda)\b)/i,
       files: [
@@ -114,6 +133,7 @@ module.exports = {
       { regex: /^(?=.*\b(change|personality)\b)/i, type: "text", text: "I'm always evolving to bring the best jokes and fun to you!",  },
       { regex: /^(?=.*\b(pick-up line|flirt)\b)/i, type: "text", text: "Are you a magician? Whenever I look at you, everyone else disappears!",  },
       { regex: /^(?=.*\b(memorable|amazing|experience)\b)/i, type: "text", text: "Every moment spent chatting with you is a memorable experience!",  },
+      { regex: /^(?=.*\b(cg|cgpa|grade)\b)(?=.*\b(matter|neccesary|needed|need)\b)/i, type: "text", text: "CGPA Doesn't Matter.\nJamil As Ad (cgpa 3.92)😐",  },
       
   
   

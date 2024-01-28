@@ -1,9 +1,14 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
+const ytdl = require('ytdl-core'); // For downloading YouTube videos
+const getFBInfo = require("@xaviabot/fb-downloader"); // For downloading Facebook videos
+const fs = require('fs'); // For working with local files
 const dotenv = require('dotenv');
 const inputHandler = require('./intent');
+const botData = require('./aidataset');
 const botinfo = require('./botinfo.js');
 const humanai = require('./humanai.js');
+const iiucinfo = require('./iiucinfo.js');
 dotenv.config();
 const waitingSticker = 'https://t.me/botresourcefordev/341';
 const botToken = process.env.BOT_TOKEN;
@@ -12,42 +17,18 @@ const githubRepoURL = 'https://api.github.com/repos/rakib86/IIUCbot-DataBase';
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
+const Replicate = require('replicate');
 const port = process.env.PORT || 3000; 
 
 
 
 
-//Render Web Service part
+const bot = new TelegramBot(botToken, { polling: true });
 
-// Replace with your bot token
-// Replace with your bot token
-const token = process.env.BOT_TOKEN;
-const webhookUrl = `https://iiucbot-new-version.onrender.com/webhook/${token}`;
-const bot = new TelegramBot(token, { webHook: { port: port } });
-
-
-
-
-// This sets up the URL for receiving updates
-bot.setWebHook(webhookUrl);
-
-// Use body-parser middleware to parse incoming JSON
-app.use(bodyParser.json());
-
-// Handle incoming updates via POST requests
-app.post(`/webhook/${token}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
-// Start the web server
 app.listen(port, () => {
-  console.log(`Web server is running on port ${port}`);
+  console.log(`Local server is running on port ${port}`);
 });
 
-
-
-///Web Service part end
 
 const GOOGLE_SEARCH_API_KEY = process.env.google_api_key;
 const GOOGLE_SEARCH_ENGINE_ID = process.env.google_id;
@@ -63,6 +44,7 @@ const auth = new google.auth.GoogleAuth({
 const intents = [
   
 
+    ...iiucinfo.additionalIntents,
     ...botinfo.additionalIntents,
     ...humanai.additionalIntents,
 
@@ -74,10 +56,34 @@ const intents = [
   
 
 
-
-
-
-
+ 
+  const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+  bot.onText(/\/askai (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const question = match[1];
+  
+    const input = {
+      debug: false,
+      top_k: 50,
+      top_p: 1,
+      prompt: question,
+      temperature: 0.5,
+      system_prompt: botData.systemPrompt,
+      max_new_tokens: 500,
+      min_new_tokens: -1
+    };
+  
+    try {
+      let response = '';
+      for await (const event of replicate.stream("meta/llama-2-70b-chat", { input })) {
+        response += event.toString() + ' ';
+      }
+      bot.sendMessage(chatId, response);
+    } catch (error) {
+      console.error(error);
+      bot.sendMessage(chatId, 'An error occurred while processing your request.');
+    }
+  });
 
 
 
@@ -87,7 +93,7 @@ async function addToGoogleSheets(userData) {
     const authClient = await auth.getClient();
   
     // Specify the Google Sheets spreadsheet ID and range where you want to add data
-    const spreadsheetId = '1JE9_CVHt5sCwk8118ihZaF74mp6jh7jALKoQdjZdyZ8';
+    const spreadsheetId = '1gGt_6mtTmIoIjERtiDBb5Im4gb2R7ohRRIf3OrWRuQY';
     const range = 'Sheet1'; // Change to the name of your sheet
   
     const sheets = google.sheets({ version: 'v4', auth: authClient });
@@ -128,7 +134,7 @@ async function addToGoogleSheets(userData) {
       const authClient = await auth.getClient();
   
       // Specify the Google Sheets spreadsheet ID and range from which to fetch data
-      const spreadsheetId = '1JE9_CVHt5sCwk8118ihZaF74mp6jh7jALKoQdjZdyZ8';
+      const spreadsheetId = '1gGt_6mtTmIoIjERtiDBb5Im4gb2R7ohRRIf3OrWRuQY';
       const range = 'Sheet1'; // Change to the name of your sheet
   
       const sheets = google.sheets({ version: 'v4', auth: authClient });
@@ -403,7 +409,25 @@ bot.onText(/\/broadcastpool$/, (msg) => {
 });
 
 
+// totaluser command
+bot.onText(/\/totaluser$/, async (msg) => {
+  const chatId = msg.chat.id;
+  const from = msg.from.username;
 
+  // Check if the sender is the admin (rakiburrahaman)
+  if (from === 'rakiburrahaman') {
+    // Retrieve user data from the Google Sheet
+    const userData = await getFromGoogleSheets();
+
+    // Get the total number of users
+    const totalUsers = userData.length;
+
+    // Send the total number of users to the admin
+    bot.sendMessage(chatId, `Total Number of Users: ${totalUsers}`);
+  } else {
+    bot.sendMessage(chatId, 'You are not authorized to use this command.');
+  }
+});
 
 
 //Live User Number 
@@ -421,6 +445,21 @@ bot.onText(/\/liveuser/, (msg) => {
     bot.sendMessage(chatId, 'You are not authorized to use this command.');
   }
 });
+
+
+//Help command
+
+bot.onText(/\/help$/, (msg) => {
+    const chatId = msg.chat.id;
+    const firstname = msg.from.first_name;
+    bot.sendVideo(chatId, 'https://t.me/botresourcefordev/367', { caption: `Hello ${firstname} !!\nwatch this video about using IIUCbot 🎉🎉` });
+    bot.sendMessage(chatId, 'Or Find help in IIUCbot Group(Only Boys) https://t.me/+Fx6j4mqFhPUzYTk1 \n or Ask question about this bot to @rakiburrahaman');
+    
+});
+
+
+
+
 
 
 
@@ -501,17 +540,50 @@ bot.onText(/\/ask (.+)/, async (msg, match) => {
 
 
 
+  
+  // Function to download YouTube video and send it to the user
+  async function downloadAndSendYouTubeVideo(chatId, videoUrl) {
+    try {
+      const videoInfo = await ytdl.getInfo(videoUrl);
+      const highestQualityFormat = ytdl.chooseFormat(videoInfo.formats, { quality: 'highest' });
+  
+      if (highestQualityFormat) {
+        const videoReadableStream = ytdl(videoUrl, { filter: 'audioandvideo', quality: 'highest' });
+  
+        // Generate a file name using the video title or a default name
+        const videoFileName = videoInfo.title ? `${videoInfo.title.replace(/[^\w\s]/gi, '')}.mp4` : 'video.mp4';
+  
+        // Download the video to a local file
+        const videoFileStream = fs.createWriteStream(videoFileName);
+        videoReadableStream.pipe(videoFileStream);
+  
+        videoFileStream.on('finish', () => {
+          // Send the downloaded video to the user
+          bot.sendVideo(chatId, videoFileName)
+            .then(() => {
+              // Remove the local video file after sending
+              fs.unlinkSync(videoFileName);
+              console.log('YouTube video sent and local file deleted successfully');
+            })
+            .catch((error) => console.error('Error sending YouTube video:', error));
+        });
+      } else {
+        bot.sendMessage(chatId, 'Error: Unable to find suitable video format.');
+      }
+    } catch (error) {
+      console.error('Error downloading YouTube video:', error);
+      bot.sendMessage(chatId, 'Error: Unable to download YouTube video.');
+    }
+  }
+  
 
 
 
-
-
-
-
-
-
-
-
+  bot.onText(/\/submit$/, (msg) => {
+    const chatId = msg.chat.id;
+    const firstname = msg.from.first_name;
+    bot.sendMessage(chatId, `Hello ${firstname} !!\nPlease send the photo, video, document, link, etc. you want to submit to the admin.`);
+  });
 
 
 
@@ -562,6 +634,50 @@ bot.on('message', async (msg) => {
       if (!userExists) {
         await addToGoogleSheets(userData);
       }
+
+
+      
+      //check if the text is youtube link 
+
+      const YTlink = text.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.*/);
+      if (YTlink) {
+    
+        stickerMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/370");
+        bot.sendMessage(chatId, 'Downloading the video...');
+        const videoUrl = YTlink[0];
+        downloadAndSendYouTubeVideo(chatId, videoUrl);
+        return;
+      }
+
+
+
+
+      
+      
+      //check if the text is facebook link like facebook.com or fb.watch or fb.com 
+      
+      const FBlink = text.match(/^(https?:\/\/)?(www\.)?(facebook\.com|fb\.?com|fb\.watch)\/.*/);
+
+
+      if (FBlink) {
+        stickerMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/370");
+        bot.sendMessage(chatId, 'Downloading the video...');
+        const videoUrl = FBlink[0];
+        getFBInfo(videoUrl)
+            //then send the video download link
+            .then((result) => {
+                bot.sendVideo(chatId, result.hd);
+            })
+            .catch((error) => {
+                console.log("Error:", error);
+            }
+            );
+    
+        return;
+      }
+
+    
+
 
     
     for (const intent of intents) {
@@ -648,7 +764,42 @@ bot.on('message', async (msg) => {
 
     if (text){
       if (!text.startsWith('/') && intentflag === false) {
-        bot.sendMessage(chatId, 'Sorry Bro! I dont have any matterial for this question.');
+     
+
+        const input = {
+          debug: false,
+          top_k: 50,
+          top_p: 1,
+          prompt: text,
+          temperature: 0.5,
+          system_prompt: botData.systemPrompt,
+          max_new_tokens: 500,
+          min_new_tokens: -1
+        };
+      
+        try {
+          let response = '';
+          for await (const event of replicate.stream("meta/llama-2-70b-chat", { input })) {
+            response += event.toString() + '';
+          }
+          bot.sendMessage(chatId, response);
+        } catch (error) {
+          console.error(error);
+          bot.sendMessage(chatId, 'An error occurred while processing your request.');
+        }
+
+        
+        //forward the chatid ,username,msg of who send this unrecognized meesage to admin group -4191385991
+        const adminchatid = '-4191385991';
+        const unrecognizedmsg = `/sendmsg ${userId}`
+
+
+
+        
+        bot.sendMessage(adminchatid, unrecognizedmsg);
+        bot.forwardMessage(adminchatid, chatId, msg.message_id);
+        
+        
     }
     }
    
@@ -660,8 +811,57 @@ bot.on('message', async (msg) => {
 
 
 
+// Assume the command is "/sendmsg target_user_chat_id Admin_Message"
+bot.onText(/\/sendmsg (.+?) (.+)/s, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUsername = msg.from.username;
+  const targetUserId = match[1];
+  const adminMessage = match[2];
+
+  // Check if the sender is the admin (@rakiburrahaman)
+  if (adminUsername === 'rakiburrahaman') {
+    try {
+      // Send the admin message to the target user
+      bot.sendMessage(targetUserId, adminMessage);
+
+      // Inform the admin that the message has been sent
+      bot.sendMessage(chatId, `Message sent to user with ID ${targetUserId}`);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      bot.sendMessage(chatId, 'Error sending message to the user.');
+    }
+  } else {
+    bot.sendMessage(chatId, 'You are not authorized to use this command.');
+  }
+});
+
+
+
+
+
+
+
+
+
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
+
+
+  const userData = {
+   
+    firstName: msg.from.first_name,
+    username: msg.from.username,
+  };
+
+  // Check if the user already exists in the Google Sheet before adding
+
+  const existingUsers = await getFromGoogleSheets();
+
+  const userExists = existingUsers.some( (user) =>  user.username === userData.username);
+
+  if (!userExists) {
+    bot.sendVideo(chatId, 'https://t.me/botresourcefordev/367', { caption: `Hello ${userData.firstName} !!\nwatch this video before using IIUCbot 🎉🎉` });
+  } 
 
   try {
     const repoContents = await getGitHubRepoContents('');
@@ -747,6 +947,19 @@ bot.on('callback_query', async (query) => {
           });
         }
       }
+
+      const textFiles = folderContents.filter(
+        (item) => item.type === 'file' && item.name.endsWith('.txt')
+      );
+  
+      if (textFiles.length > 0) {
+        for (const textFile of textFiles) {
+          const textFileContent = await getTextFileContent(textFile.download_url);
+          bot.sendMessage(chatId, `${textFileContent}`);
+        }
+      }
+
+
     } catch (error) {
       console.error(error);
     }
@@ -803,6 +1016,19 @@ bot.on('callback_query', async (query) => {
           });
         }
       }
+
+      const textFiles = folderContents.filter(
+        (item) => item.type === 'file' && item.name.endsWith('.txt')
+      );
+  
+      if (textFiles.length > 0) {
+        for (const textFile of textFiles) {
+          const textFileContent = await getTextFileContent(textFile.download_url);
+          bot.sendMessage(chatId, `${textFileContent}`);
+        }
+      }
+
+
     } catch (error) {
       console.error(error);
     }
@@ -825,3 +1051,24 @@ async function getGitHubRepoContents(path) {
     throw error;
   }
 }
+
+
+async function getTextFileContent(fileDownloadUrl) {
+  try {
+    const response = await axios.get(fileDownloadUrl, { responseType: 'text' });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching text file content: ${error}`);
+    return 'Error fetching guidline content content.';
+  }
+}
+
+
+
+
+
+
+
+
+
+

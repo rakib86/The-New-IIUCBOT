@@ -1,0 +1,9 @@
+//hide env file
+
+// const env = require('./env.json');
+// process.env = env;
+
+.env
+
+
+

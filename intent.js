@@ -21,6 +21,12 @@ module.exports = {
 
 
 
+    //   for mid and final exam routine
+    if (userInput.includes('exam')) {
+        return 'Exam-Routine';
+    }
+
+
       
  
       if (userInput.includes('1st') && userInput.includes('mid') && userInput.includes('question')) {
@@ -120,6 +126,11 @@ module.exports = {
     } else if (userInput.includes('8th')) {
         return '8th';
     }
+
+
+  
+
+
     
 
       

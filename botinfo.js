@@ -1,6 +1,13 @@
 // other_regex.js
 module.exports = {
     additionalIntents: [
+
+
+
+   
+
+      { regex: /^(?=.*\b(the|real|world|andrew)\b)(?=.*\b(course|tutorial)\b)/i, type: 'text', text: `Here is the Full Andrew Tate - The Real World Courses: https://mega.nz/folder/0vxykKCb#hSg1AWR8_nVTZ_8HOfV-cQ` },
+
   
       { regex: /^(?=.*\b(about|intruduce|info)\b)(?=.*\b(you|yourself|iiucbot)\b)/i, type: 'text', text:`👋 Hello! I'm iiucbot, your friendly virtual companion from the International Islamic University Chittagong (IIUC). 📚🏫
   
@@ -57,6 +64,9 @@ module.exports = {
         ],
         
       },
+
+  
+      
       {
         regex: /^(?=.*\b(info|information)\b)(?=.*\b(faisal)\b)/i,
         type: "text",
@@ -94,11 +104,19 @@ module.exports = {
         ],
         
       },
+
+      {
+        regex: /^(?=.*\b(who)\b)(?=.*\b(created|made|developed|make)\b)/i,
+        type: "text",
+        text: "Rakibur Rahaman is the creator of this bot, and some anonymous individuals also contributed to its development to ensure you have the best possible experience.",
+        
+      },
+  
   
       {
         regex: /^(?=.*\b(who)\b)(?=.*\b(rakib)\b)/i,
         type: "text",
-        text: "Rakib is PRO",
+        text: "Rakibur Rahaman is the creator of this bot,current student of CSE department,IIUC.",
         
       },
   
