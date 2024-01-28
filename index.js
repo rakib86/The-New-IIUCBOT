@@ -1,6 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
-const ytdl = require('ytdl-core'); // For downloading YouTube videos
 const getFBInfo = require("@xaviabot/fb-downloader"); // For downloading Facebook videos
 const fs = require('fs'); // For working with local files
 const dotenv = require('dotenv');
@@ -541,42 +540,6 @@ bot.onText(/\/ask (.+)/, async (msg, match) => {
 
 
 
-
-  
-  // Function to download YouTube video and send it to the user
-  async function downloadAndSendYouTubeVideo(chatId, videoUrl) {
-    try {
-      const videoInfo = await ytdl.getInfo(videoUrl);
-      const highestQualityFormat = ytdl.chooseFormat(videoInfo.formats, { quality: 'highest' });
-  
-      if (highestQualityFormat) {
-        const videoReadableStream = ytdl(videoUrl, { filter: 'audioandvideo', quality: 'highest' });
-  
-        // Generate a file name using the video title or a default name
-        const videoFileName = videoInfo.title ? `${videoInfo.title.replace(/[^\w\s]/gi, '')}.mp4` : 'video.mp4';
-  
-        // Download the video to a local file
-        const videoFileStream = fs.createWriteStream(videoFileName);
-        videoReadableStream.pipe(videoFileStream);
-  
-        videoFileStream.on('finish', () => {
-          // Send the downloaded video to the user
-          bot.sendVideo(chatId, videoFileName)
-            .then(() => {
-              // Remove the local video file after sending
-              fs.unlinkSync(videoFileName);
-              console.log('YouTube video sent and local file deleted successfully');
-            })
-            .catch((error) => console.error('Error sending YouTube video:', error));
-        });
-      } else {
-        bot.sendMessage(chatId, 'Error: Unable to find suitable video format.');
-      }
-    } catch (error) {
-      console.error('Error downloading YouTube video:', error);
-      bot.sendMessage(chatId, 'Error: Unable to download YouTube video.');
-    }
-  }
   
 
 
@@ -639,20 +602,6 @@ bot.on('message', async (msg) => {
 
 
       
-      //check if the text is youtube link 
-
-      const YTlink = text.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.*/);
-      if (YTlink) {
-    
-        stickerMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/370");
-        bot.sendMessage(chatId, 'Downloading the video...');
-        const videoUrl = YTlink[0];
-        downloadAndSendYouTubeVideo(chatId, videoUrl);
-        return;
-      }
-
-
-
 
       
       
