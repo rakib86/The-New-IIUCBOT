@@ -1,5 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
+const ytdl = require('ytdl-core'); // For downloading YouTube videos
 const getFBInfo = require("@xaviabot/fb-downloader"); // For downloading Facebook videos
 const fs = require('fs'); // For working with local files
 const dotenv = require('dotenv');
@@ -24,12 +25,37 @@ const port = process.env.PORT || 3000;
 
 
 
-const bot = new TelegramBot(botToken, { polling: true });
+//Render Web Service part
 
-app.listen(port, () => {
-  console.log(`Local server is running on port ${port}`);
+// Replace with your bot token
+// Replace with your bot token
+const token = process.env.BOT_TOKEN;
+const webhookUrl = `https://perch-cape.cyclic.app/webhook/${token}`;
+const bot = new TelegramBot(token, { webHook: { port: port } });
+
+
+
+
+// This sets up the URL for receiving updates
+bot.setWebHook(webhookUrl);
+
+// Use body-parser middleware to parse incoming JSON
+app.use(bodyParser.json());
+
+// Handle incoming updates via POST requests
+app.post(`/webhook/${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
 });
 
+// Start the web server
+app.listen(port, () => {
+  console.log(`Web server is running on port ${port}`);
+});
+
+
+
+///Web Service part end
 
 const GOOGLE_SEARCH_API_KEY = process.env.google_api_key;
 const GOOGLE_SEARCH_ENGINE_ID = process.env.google_id;
@@ -51,6 +77,8 @@ const intents = [
 
     
   ];
+
+
 
 
 
