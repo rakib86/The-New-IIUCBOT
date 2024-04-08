@@ -1,0 +1,142 @@
+if (msg.reply_to_message && msg.text.startsWith('/setcommand ...')) {
+    let replyToMessage = msg.reply_to_message;
+    if (replyToMessage.photo) {
+        let fileId = replyToMessage.photo[0].file_id; // get the smallest size photo
+        fileStore[msg.from.id] = fileId; // store the file id
+        // send the photo back to the user
+        bot.sendPhoto(msg.chat.id, fileStore[msg.from.id]);
+    }
+}
+
+
+ else if (msg.reply_to_message && msg.text && msg.text.startsWith('/delete')) {
+    // Delete a photo from a command from firestore
+
+    let fileid = msg.reply_to_message.photo[0].file_id;
+
+    //search for the file id in the firestore and delete the entire row
+
+    const groupDoc = doc(db, "groups", chatId.toString());
+    const groupSnapshot = await getDoc(groupDoc);
+
+    if (groupSnapshot.exists()) {
+      const groupData = groupSnapshot.data();
+      const commands = groupData.commands || {};
+
+      for (const key in commands) {
+        if (commands[key] === fileid) {
+          delete commands[key];
+        }
+      }
+
+      await updateDoc(groupDoc, { commands });
+    }
+  }
+
+
+  groups -> gourpid -> commands(map) -> {
+    /davidimage - fileid1
+    /davidimage - fileid2
+
+  }
+
+  if (chattype === "private") {
+    const prompt = msg.text;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    bot.sendMessage(chatId, text);
+  }
+
+
+if (chattype === "private" && msg.text && !msg.text.startsWith('/')) {
+  const waitingMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/402");
+  const prompt = msg.text;
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
+  bot.deleteMessage(chatId, waitingMessage.message_id);
+  bot.sendMessage(chatId, text, {
+    reply_to_message_id: msg.message_id
+  } );
+}
+
+
+  if (chattype === "private" && msg.text && !msg.text.startsWith('/')) {
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{ text: "Hello, I have 2 dogs in my house." }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Great to meet you. What would you like to know?" }],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: 100,
+      },
+    });
+  
+    const msg = prompt; 
+  
+    const result = await chat.sendMessage(msg);
+    const response = await result.response;
+    const text = response.text();
+    console.log(text);
+
+    bot.sendMessage(chatId, text);
+  }
+
+
+  
+
+
+
+
+
+let stop = false;
+
+  
+  if(msg.text === '/stop') {
+    stop = true;
+    return;
+  }
+
+ if (chattype === "private" && msg.text && !msg.text.startsWith('/')) {
+  stop = false; // Reset stop flag for each new non-command message
+  const prompt = msg.text + 'SystemPrompt: Your name is IIUCbot. Give Short answer. Try to mention the important points.Try to use emojis.Dont send duplicate data. Answer in Organized way.';
+  const result = await model.generateContentStream(prompt);
+
+  let text = '';
+  let messageId;
+  let growingText = 'Type /stop to stop the Response\n\n\n';
+
+  for await (const chunk of result.stream) {
+    if (stop) break;
+    text += chunk.text();
+  
+    // Split the text into words
+    const words = text.split(' ');
+
+    // Send each word individually
+    for (const word of words) {
+      if (stop) break;
+
+      // Add the new word to the growing text
+      growingText += word + ' ';
+
+      // Update the previous message
+      if (messageId) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds
+        await bot.editMessageText(growingText.trim(), {chat_id: chatId, message_id: messageId});
+      } else {
+        // Send the new message and store its ID
+        const message = await bot.sendMessage(chatId, growingText.trim());
+        messageId = message.message_id;
+      }
+    }
+  }
+}
