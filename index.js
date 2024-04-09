@@ -116,66 +116,59 @@ bot.on("message", async (msg) => {
     return;
   }
 
-  //if user reply to a document then it will analyze the document and generate a response based on the prompt
-
-  if (msg.reply_to_message && msg.reply_to_message.document && !msg.text.includes('/')) {
-    const userId = msg.from.id;
-    const prompt = msg.text;
-    const pdfId = msg.reply_to_message.document.file_id;
-    const chatId = msg.chat.id;
-    await geminipdfProcess(pdfId, userId, prompt, chatId, bot, msg);
-  }
+ 
 
 
+// if (msg.reply_to_message) {
+//     const chatId = msg.chat.id;
+//     const usersCollection = collection(db, "users");
+//     const usersSnapshot = await getDocs(usersCollection);
+
+//     if (msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) {
+//         const caption = msg.reply_to_message.caption;
+
+//           if (msg.text == '/broadcast' && msg.from.id == 1927701329) {
+//           bot.sendMessage(chatId, "Broadcasting to all users...");
+//           } else {
+//           return;
+//           }
+
+//         usersSnapshot.docs.forEach(async (doc) => {
+//             const userData = doc.data();
+//             const userChatId = userData.userid;
+
+//             if (msg.reply_to_message.photo) {
+//                 bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
+//             } else if (msg.reply_to_message.video) {
+//                 bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
+//             } else if (msg.reply_to_message.document) {
+//                 bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
+//             } else if (msg.reply_to_message.audio) {
+//                 bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
+//             } else if (msg.reply_to_message.voice) {
+//                 bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
+//             } else if (msg.reply_to_message.animation) {
+//                 bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
+//             } else if (msg.reply_to_message.sticker) {
+//                 bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
+//             }
+//         });
+
+//         bot.sendMessage(chatId, "Broadcast sent to all users");
+//     } else if (msg.reply_to_message.text) {
+//         usersSnapshot.docs.forEach(async (doc) => {
+//             const userData = doc.data();
+//             const userChatId = userData.userid;
+//             bot.sendMessage(userChatId, msg.reply_to_message.text);
+//         });
+
+//         bot.sendMessage(chatId, "Broadcast sent to all users");
+//     }
+// }
 
 
-if (msg.reply_to_message) {
-    const chatId = msg.chat.id;
-    const usersCollection = collection(db, "users");
-    const usersSnapshot = await getDocs(usersCollection);
 
-    if (msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) {
-        const caption = msg.reply_to_message.caption;
 
-          if (msg.text == '/broadcast' && msg.from.id == 1927701329) {
-          bot.sendMessage(chatId, "Broadcasting to all users...");
-          } else {
-          bot.sendMessage(chatId, "You are not authorized to broadcast messages");
-          return;
-          }
-
-        usersSnapshot.docs.forEach(async (doc) => {
-            const userData = doc.data();
-            const userChatId = userData.userid;
-
-            if (msg.reply_to_message.photo) {
-                bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
-            } else if (msg.reply_to_message.video) {
-                bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
-            } else if (msg.reply_to_message.document) {
-                bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
-            } else if (msg.reply_to_message.audio) {
-                bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
-            } else if (msg.reply_to_message.voice) {
-                bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
-            } else if (msg.reply_to_message.animation) {
-                bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
-            } else if (msg.reply_to_message.sticker) {
-                bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
-            }
-        });
-
-        bot.sendMessage(chatId, "Broadcast sent to all users");
-    } else if (msg.reply_to_message.text) {
-        usersSnapshot.docs.forEach(async (doc) => {
-            const userData = doc.data();
-            const userChatId = userData.userid;
-            bot.sendMessage(userChatId, msg.reply_to_message.text);
-        });
-
-        bot.sendMessage(chatId, "Broadcast sent to all users");
-    }
-}
 
 
   if (chattype === "private" && msg.text && !msg.text.startsWith('/') && !msg.text.startsWith('http') && !msg.reply_to_message) {
@@ -233,7 +226,16 @@ if (msg.reply_to_message) {
     const imageId = msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id;
     const chatId = msg.chat.id;
 
-    await geminiImageProcess(imageId, userId, prompt, chatId, bot, msg);
+    //get the chat type
+
+    if (chattype === "private") {
+      await geminiImageProcess(imageId, userId, prompt, chatId, bot, msg);
+    } else if (chattype === "group" || chattype === "supergroup" && msg.text.startsWith('@')) {
+      await geminiImageProcess(imageId, userId, prompt, chatId, bot, msg);
+    } else {
+      bot.sendMessage(chatId, "You need to ask the question including '@' at first in the group chat");
+    }
+
   }
 
 
@@ -261,6 +263,9 @@ if (msg.reply_to_message) {
     } else if (replyToMessage.animation) {
       fileId = replyToMessage.animation.file_id;
       fileType = 'animation';
+    } else if (replyToMessage.sticker) { // Add this condition
+      fileId = replyToMessage.sticker.file_id;
+      fileType = 'sticker';
     } else if (replyToMessage.text) {
       text = replyToMessage.text;
       fileType = 'text';
@@ -297,37 +302,40 @@ if (msg.reply_to_message) {
         reply_to_message_id: msg.message_id
       });
     }
-  } else if (msg.text && msg.text.startsWith('/delete')) {
-    const parts = msg.text.split(' ');
-    const index = parseInt(parts[1], 10);
-    // Remove the '/' from the command if it exists
-    const command = parts[2].startsWith('/') ? parts[2].slice(1) : parts[2];
-    let docPath = chattype === 'private' ? "users" : "groups";
+  } else if (msg.reply_to_message && msg.text === '/remove') {
+    const caption = msg.reply_to_message.caption;
+    const idPattern = /ID: (\d+)/;
+    const match = caption.match(idPattern);
 
-    if (parts.length >= 3) {
-      const chatDoc = doc(db, docPath, chatId.toString());
-      const chatSnapshot = await getDoc(chatDoc);
+    if (match) {
+        const id = parseInt(match[1], 10);
+        let docPath = chattype === 'private' ? "users" : "groups";
+        const chatDoc = doc(db, docPath, chatId.toString());
+        const chatSnapshot = await getDoc(chatDoc);
 
-      if (chatSnapshot.exists()) {
-        const chatData = chatSnapshot.data();
-        const commands = chatData.commands || {};
+        if (chatSnapshot.exists()) {
+            const chatData = chatSnapshot.data();
+            const commands = chatData.commands || {};
 
-        if (commands[command]) {
-          if (index >= 0 && index < commands[command].length) {
-            commands[command].splice(index, 1);
-            if (commands[command].length === 0) {
-              delete commands[command];
+            for (let command in commands) {
+                const files = commands[command];
+                const fileIndex = files.findIndex(file => file.index === id);
+
+                if (fileIndex !== -1) {
+                    files.splice(fileIndex, 1);
+                    if (files.length === 0) {
+                        delete commands[command];
+                    }
+                    await updateDoc(chatDoc, { commands });
+                    bot.sendMessage(chatId, `File with ID ${id} deleted from command /${command}`, {
+                        reply_to_message_id: msg.message_id
+                    });
+                    break;
+                }
             }
-            await updateDoc(chatDoc, { commands });
-          }
         }
-      }
     }
-
-    bot.sendMessage(chatId, `File at index ${index} deleted from command /${command}`, {
-      reply_to_message_id: msg.message_id
-    });
-  }else if (msg.text && msg.text.startsWith('/')) {
+}else if (msg.text && msg.text.startsWith('/')) {
     let command = msg.text.slice(1).split('@')[0]; // Remove the '/' and the bot username from the command
     let docPath = chattype === 'private' ? "users" : "groups";
 

@@ -2,13 +2,18 @@ const { axios } = require("../config/config.js");
 const ytdl = require('ytdl-core'); // For downloading YouTube videos
 const getFBInfo = require("@xaviabot/fb-downloader"); // For downloading Facebook videos
 const ytpl = require('ytpl');
-
+const fs = require('fs');
+const path = require('path');
 module.exports = async function (bot) {
-    bot.onText(/^http(.+)/, async (msg, match) => {
+    bot.onText(/^http(.+)/, async (msg) => {
         const chatId = msg.chat.id;
         const text = msg.text;
 
-
+        //if chat is a group, return
+        if (msg.chat.type === "group" || msg.chat.type === "supergroup") {
+            bot.sendMessage(chatId, "I can't download media in groups. Please send me the link in private chat.@iiucbot");
+            return;
+        }
 
 
 
@@ -39,17 +44,55 @@ module.exports = async function (bot) {
         //check if its a youtube shorts link
 
         const youtubeShortsLink = text.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/shorts(.*)$/);
+ 
+if (youtubeShortsLink) {
+    const stickerMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/402");
+    const videoUrl = text;
+    try {
+        const videoInfo = await ytdl.getInfo(videoUrl);
+        const highestQualityFormat = ytdl.chooseFormat(videoInfo.formats, { quality: 'highest' });
 
-        if (youtubeShortsLink) {
-            stickerMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/402");
-            const videoUrl = YTlink[0];
-            downloadAndSendYouTubeVideo(chatId, videoUrl);
+        if (highestQualityFormat) {
+            const videoReadableStream = ytdl(videoUrl, { filter: 'audioandvideo', quality: 'highest' });
+
+            // Generate a file name using the video title or a default name
+            const videoFileName = 'ytshorts.mp4';
+
+            // Create a directory path with the user's ID
+            const directoryPath = path.join('YTvideos', String(chatId));
+
+            // Create the directory if it doesn't exist
+            fs.mkdirSync(directoryPath, { recursive: true });
+
+            // Download the video to a local file in the specified directory
+            const videoFileStream = fs.createWriteStream(path.join(directoryPath, videoFileName));
+            videoReadableStream.pipe(videoFileStream);
+
+            videoFileStream.on('finish', () => {
+                // Send the downloaded video to the user
+                bot.sendVideo(chatId, path.join(directoryPath, videoFileName))
+                .then(() => {
+                    // Delete the file after the video has been sent
+                    fs.unlinkSync(path.join(directoryPath, videoFileName));
+                })
+                .catch((error) => {
+                    console.error('Error sending or deleting video:', error);
+                });
+
+            });
+
+            // Remove the waiting sticker
             bot.deleteMessage(chatId, stickerMessage.message_id);
-            return;
+            
+        } else {
+            bot.sendMessage(chatId, 'Error: Unable to find suitable video format.');
         }
-
-
-
+    } catch (error) {
+        console.error('Error downloading YouTube video:', error);
+    }
+  
+    return;
+}
 
 
 
@@ -136,3 +179,7 @@ module.exports = async function (bot) {
         }
     });
 };
+
+
+
+  
