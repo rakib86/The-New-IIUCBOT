@@ -9,9 +9,7 @@ const {
     genAI,
     db
 } = require('./config/config.js');
-const { getDoc } = require('@firebase/firestore');
-const { doc, setDoc } = require("firebase/firestore");
-const { updateDoc } = require('@firebase/firestore');
+const { getDocs, collection, setDoc, updateDoc, doc, getDoc } = require("firebase/firestore");
 const fs = require("fs");
 const pdf = require('@bakedpotatolord/pdf-parse');
 const path = require('path');
@@ -100,6 +98,9 @@ async function geminipdfProcess(pdfId, userId, prompt, chatId, bot, msg) {
 
 
 
+
+
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const chattype = msg.chat.type;
@@ -128,6 +129,53 @@ bot.on("message", async (msg) => {
 
 
 
+if (msg.reply_to_message) {
+    const chatId = msg.chat.id;
+    const usersCollection = collection(db, "users");
+    const usersSnapshot = await getDocs(usersCollection);
+
+    if (msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) {
+        const caption = msg.reply_to_message.caption;
+
+          if (msg.text == '/broadcast' && msg.from.id == 1927701329) {
+          bot.sendMessage(chatId, "Broadcasting to all users...");
+          } else {
+          bot.sendMessage(chatId, "You are not authorized to broadcast messages");
+          return;
+          }
+
+        usersSnapshot.docs.forEach(async (doc) => {
+            const userData = doc.data();
+            const userChatId = userData.userid;
+
+            if (msg.reply_to_message.photo) {
+                bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
+            } else if (msg.reply_to_message.video) {
+                bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
+            } else if (msg.reply_to_message.document) {
+                bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
+            } else if (msg.reply_to_message.audio) {
+                bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
+            } else if (msg.reply_to_message.voice) {
+                bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
+            } else if (msg.reply_to_message.animation) {
+                bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
+            } else if (msg.reply_to_message.sticker) {
+                bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
+            }
+        });
+
+        bot.sendMessage(chatId, "Broadcast sent to all users");
+    } else if (msg.reply_to_message.text) {
+        usersSnapshot.docs.forEach(async (doc) => {
+            const userData = doc.data();
+            const userChatId = userData.userid;
+            bot.sendMessage(userChatId, msg.reply_to_message.text);
+        });
+
+        bot.sendMessage(chatId, "Broadcast sent to all users");
+    }
+}
 
 
   if (chattype === "private" && msg.text && !msg.text.startsWith('/') && !msg.text.startsWith('http') && !msg.reply_to_message) {
@@ -535,3 +583,7 @@ async function geminiImageProcess(imageId, userId, prompt, chatId, bot, msg) {
     reply_to_message_id: msg.message_id
   });
 }
+
+
+
+
