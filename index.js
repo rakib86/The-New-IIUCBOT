@@ -13,6 +13,7 @@ const { getDoc } = require('@firebase/firestore');
 const { doc, setDoc } = require("firebase/firestore");
 const { updateDoc } = require('@firebase/firestore');
 const fs = require("fs");
+const pdf = require('@bakedpotatolord/pdf-parse');
 const path = require('path');
 
 // Commands
@@ -21,6 +22,7 @@ const showallpdfHandler = require('./commands/showpdf');
 const showsemesterpdfHandler = require('./commands/semesterpdf');
 const busHandler = require('./commands/bus');
 const mediadownloadHandler = require('./commands/mediadownloader');
+const { text } = require('express');
 
 const bot = new TelegramBot(botToken, { polling: true });
 
@@ -50,6 +52,51 @@ bot.on("photo", async (msg) => {
 });
 
 
+async function geminipdfProcess(pdfId, userId, prompt, chatId, bot, msg) {
+
+  const waitingMessage = await bot.sendSticker(chatId, "https://t.me/botresourcefordev/402");
+  const userPdfFolder = path.join(__dirname, `pdf/user_${userId}`);
+  if (!fs.existsSync(userPdfFolder)) {
+    fs.mkdirSync(userPdfFolder, { recursive: true });
+  }
+
+  // Download and save the pdf in the user's folder
+  const pdfFilePath = path.join(userPdfFolder, `${pdfId}.pdf`);
+  const pdfFile = await bot.downloadFile(pdfId, userPdfFolder);
+  fs.renameSync(pdfFile, pdfFilePath);
+
+  // analyze the pdf with pdf2json and get the text \
+  let pdftext = '';
+  let dataBuffer = fs.readFileSync(pdfFilePath);
+
+  try {
+    const data = await pdf(dataBuffer);
+    pdftext = data.text;
+  } catch (error) {
+    console.error('Failed to parse PDF:', error);
+    await bot.sendMessage(chatId, 'Sorry, I failed to analyze the PDF. Please try again with a different file.');
+    return;
+  }
+
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const pdfquestion = 'Act like you are document analyzer. You analyze the document below and generate a response based on the prompt. \n\n' + pdftext + '\n\nThe prompt is:' + prompt;
+  const result = await model.generateContent(pdfquestion);
+  const response = await result.response;
+  const text = response.text();
+
+  bot.deleteMessage(chatId, waitingMessage.message_id);
+
+
+
+  bot.sendMessage(chatId, text, {
+    reply_to_message_id: msg.message_id
+  });
+
+  //delete the pdf file
+
+  fs.unlinkSync(pdfFilePath);
+
+}
 
 
 
@@ -68,7 +115,15 @@ bot.on("message", async (msg) => {
     return;
   }
 
+  //if user reply to a document then it will analyze the document and generate a response based on the prompt
 
+  if (msg.reply_to_message && msg.reply_to_message.document && !msg.text.includes('/')) {
+    const userId = msg.from.id;
+    const prompt = msg.text;
+    const pdfId = msg.reply_to_message.document.file_id;
+    const chatId = msg.chat.id;
+    await geminipdfProcess(pdfId, userId, prompt, chatId, bot, msg);
+  }
 
 
 
