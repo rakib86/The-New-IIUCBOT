@@ -118,49 +118,79 @@ bot.on("message", async (msg) => {
 
  
 
-
-if (msg.reply_to_message) {
-  const chatId = msg.chat.id;
-  const usersCollection = collection(db, "demo");
-  const usersSnapshot = await getDocs(usersCollection);
-
-  if ((msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) && msg.text == '/broadcast' && msg.from.id == 1927701329) {
-    const caption = msg.reply_to_message.caption;
-    usersSnapshot.docs.forEach(async (doc) => {
-      const userData = doc.data();
-      const userChatId = userData.userid;
-
-      if (msg.reply_to_message.photo) {
-        bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
-      } else if (msg.reply_to_message.video) {
-        bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
-      } else if (msg.reply_to_message.document) {
-        bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
-      } else if (msg.reply_to_message.audio) {
-        bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
-      } else if (msg.reply_to_message.voice) {
-        bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
-      } else if (msg.reply_to_message.animation) {
-        bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
-      } else if (msg.reply_to_message.sticker) {
-        bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
-      }
-    });
-
-    bot.sendMessage(chatId, "Broadcast sent to all users");
-  } else if (msg.reply_to_message.text && msg.text == '/broadcast' && msg.from.id == 1927701329) {
-    usersSnapshot.docs.forEach(async (doc) => {
-      const userData = doc.data();
-      const userChatId = userData.userid;
-      bot.sendMessage(userChatId, msg.reply_to_message.text);
-    });
-
-    bot.sendMessage(chatId, "Broadcast sent to all users");
-  } else if (msg.text == '/broadcast' && msg.from.id != 1927701329) {
-    bot.sendMessage(chatId, "You are not authorized to use this command");
+  const Bottleneck = require('bottleneck');
+  const limiter = new Bottleneck({
+    maxConcurrent: 1,
+    minTime: 100 // 10 messages per second
+  });
+  
+  if (msg.reply_to_message) {
+    const chatId = msg.chat.id;
+    const usersCollection = collection(db, "demo");
+    const usersSnapshot = await getDocs(usersCollection);
+  
+    if ((msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) && msg.text == '/broadcast' && msg.from.id == 1927701329) {
+      const caption = msg.reply_to_message.caption;
+      bot.sendMessage(chatId, "Sending broadcast to all users...");
+  
+      const tasks = usersSnapshot.docs.map((doc) => {
+        return limiter.schedule(() => {
+          const userData = doc.data();
+          const userChatId = userData.userid;
+  
+          console.log('sending broadcast to user:', userChatId);
+  
+          try {
+            if (msg.reply_to_message.photo) {
+              bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
+            } else if (msg.reply_to_message.video) {
+              bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
+            } else if (msg.reply_to_message.document) {
+              bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
+            } else if (msg.reply_to_message.audio) {
+              bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
+            } else if (msg.reply_to_message.voice) {
+              bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
+            } else if (msg.reply_to_message.animation) {
+              bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
+            } else if (msg.reply_to_message.sticker) {
+              bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
+            }
+          } catch (error) {
+            console.log('Failed to send message to user:', userChatId);
+          }
+        });
+      });
+  
+      Promise.all(tasks).then(() => {
+        bot.sendMessage(chatId, "Broadcast sent to all users");
+      });
+  
+    } else if (msg.reply_to_message.text && msg.text == '/broadcast' && msg.from.id == 1927701329) {
+      bot.sendMessage(chatId, "Sending broadcast to all users...");
+  
+      const tasks = usersSnapshot.docs.map((doc) => {
+        return limiter.schedule(() => {
+          const userData = doc.data();
+          const userChatId = userData.userid;
+          try {
+            bot.sendMessage(userChatId, msg.reply_to_message.text);
+          } catch (error) {
+            console.log('Failed to send message to user:', userChatId);
+          }
+        });
+      });
+  
+      Promise.all(tasks).then(() => {
+        bot.sendMessage(chatId, "Broadcast sent to all users");
+      });
+  
+    } else if (msg.text == '/broadcast' && msg.from.id != 1927701329) {
+      bot.sendMessage(chatId, "You are not authorized to use this command");
+    }
   }
-}
-
+  
+  
 
 
 

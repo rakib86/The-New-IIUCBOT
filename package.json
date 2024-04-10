@@ -4,6 +4,7 @@
     "@google/generative-ai": "^0.5.0",
     "@xaviabot/fb-downloader": "^1.0.14",
     "axios": "^1.6.8",
+    "bottleneck": "^2.8.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "file-system": "^2.2.2",
