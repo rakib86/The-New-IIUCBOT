@@ -119,52 +119,47 @@ bot.on("message", async (msg) => {
  
 
 
-// if (msg.reply_to_message) {
-//     const chatId = msg.chat.id;
-//     const usersCollection = collection(db, "users");
-//     const usersSnapshot = await getDocs(usersCollection);
+if (msg.reply_to_message) {
+  const chatId = msg.chat.id;
+  const usersCollection = collection(db, "demo");
+  const usersSnapshot = await getDocs(usersCollection);
 
-//     if (msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) {
-//         const caption = msg.reply_to_message.caption;
+  if ((msg.reply_to_message.photo || msg.reply_to_message.video || msg.reply_to_message.document || msg.reply_to_message.audio || msg.reply_to_message.voice || msg.reply_to_message.animation || msg.reply_to_message.sticker) && msg.text == '/broadcast' && msg.from.id == 1927701329) {
+    const caption = msg.reply_to_message.caption;
+    usersSnapshot.docs.forEach(async (doc) => {
+      const userData = doc.data();
+      const userChatId = userData.userid;
 
-//           if (msg.text == '/broadcast' && msg.from.id == 1927701329) {
-//           bot.sendMessage(chatId, "Broadcasting to all users...");
-//           } else {
-//           return;
-//           }
+      if (msg.reply_to_message.photo) {
+        bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
+      } else if (msg.reply_to_message.video) {
+        bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
+      } else if (msg.reply_to_message.document) {
+        bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
+      } else if (msg.reply_to_message.audio) {
+        bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
+      } else if (msg.reply_to_message.voice) {
+        bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
+      } else if (msg.reply_to_message.animation) {
+        bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
+      } else if (msg.reply_to_message.sticker) {
+        bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
+      }
+    });
 
-//         usersSnapshot.docs.forEach(async (doc) => {
-//             const userData = doc.data();
-//             const userChatId = userData.userid;
+    bot.sendMessage(chatId, "Broadcast sent to all users");
+  } else if (msg.reply_to_message.text && msg.text == '/broadcast' && msg.from.id == 1927701329) {
+    usersSnapshot.docs.forEach(async (doc) => {
+      const userData = doc.data();
+      const userChatId = userData.userid;
+      bot.sendMessage(userChatId, msg.reply_to_message.text);
+    });
 
-//             if (msg.reply_to_message.photo) {
-//                 bot.sendPhoto(userChatId, msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id, { caption });
-//             } else if (msg.reply_to_message.video) {
-//                 bot.sendVideo(userChatId, msg.reply_to_message.video.file_id, { caption });
-//             } else if (msg.reply_to_message.document) {
-//                 bot.sendDocument(userChatId, msg.reply_to_message.document.file_id, { caption });
-//             } else if (msg.reply_to_message.audio) {
-//                 bot.sendAudio(userChatId, msg.reply_to_message.audio.file_id, { caption });
-//             } else if (msg.reply_to_message.voice) {
-//                 bot.sendVoice(userChatId, msg.reply_to_message.voice.file_id, { caption });
-//             } else if (msg.reply_to_message.animation) {
-//                 bot.sendAnimation(userChatId, msg.reply_to_message.animation.file_id, { caption });
-//             } else if (msg.reply_to_message.sticker) {
-//                 bot.sendSticker(userChatId, msg.reply_to_message.sticker.file_id);
-//             }
-//         });
-
-//         bot.sendMessage(chatId, "Broadcast sent to all users");
-//     } else if (msg.reply_to_message.text) {
-//         usersSnapshot.docs.forEach(async (doc) => {
-//             const userData = doc.data();
-//             const userChatId = userData.userid;
-//             bot.sendMessage(userChatId, msg.reply_to_message.text);
-//         });
-
-//         bot.sendMessage(chatId, "Broadcast sent to all users");
-//     }
-// }
+    bot.sendMessage(chatId, "Broadcast sent to all users");
+  } else if (msg.text == '/broadcast' && msg.from.id != 1927701329) {
+    bot.sendMessage(chatId, "You are not authorized to use this command");
+  }
+}
 
 
 
@@ -303,12 +298,21 @@ bot.on("message", async (msg) => {
       });
     }
   } else if (msg.reply_to_message && msg.text === '/remove') {
-    const caption = msg.reply_to_message.caption;
-    const idPattern = /ID: (\d+)/;
-    const match = caption.match(idPattern);
+    let idPattern = /ID: (\d+)/;
+    let match = null;
+    let id = null;
+
+    // Check if the replied message is a caption or text
+    if (msg.reply_to_message.caption) {
+        match = msg.reply_to_message.caption.match(idPattern);
+    } else if (msg.reply_to_message.text) {
+        // Extract the ID from the first line of the text
+        const firstLine = msg.reply_to_message.text.split('\n')[0];
+        match = firstLine.match(idPattern);
+    }
 
     if (match) {
-        const id = parseInt(match[1], 10);
+        id = parseInt(match[1], 10);
         let docPath = chattype === 'private' ? "users" : "groups";
         const chatDoc = doc(db, docPath, chatId.toString());
         const chatSnapshot = await getDoc(chatDoc);
