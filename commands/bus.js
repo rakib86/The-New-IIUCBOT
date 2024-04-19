@@ -14,7 +14,7 @@ const storage = getStorage();
 module.exports = async function(bot) {
 
 
-    bot.onText(/\/bus$/, async (msg) => {
+    bot.onText(/\/bus/, async (msg) => {
         const chatId = msg.chat.id;
         const userId = msg.from.id; // Get user's Telegram ID
 
