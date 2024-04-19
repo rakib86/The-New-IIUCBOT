@@ -38,7 +38,7 @@ bot.onText(/\/getsemester$/, async (msg) => {
   }
 });
 
-bot.onText(/\/notes/, async (msg) => {
+bot.onText(/\/notes$/, async (msg) => {
    const chatId = msg.chat.id;
    const userId = msg.from.id; // Get user's Telegram ID
 

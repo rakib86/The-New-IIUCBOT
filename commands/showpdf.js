@@ -6,7 +6,7 @@ module.exports = async function(bot) {
 } = require('../config/config');
 
 
-bot.onText(/\/allpdf/, async (msg) => {
+bot.onText(/\/allpdf$/, async (msg) => {
     const chatId = msg.chat.id;
     bot.sendMessage(chatId, 'Choose your semester:', {
       reply_to_message_id: msg.message_id,
