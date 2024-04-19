@@ -20,6 +20,7 @@ const showallpdfHandler = require('./commands/showpdf');
 const showsemesterpdfHandler = require('./commands/semesterpdf');
 const busHandler = require('./commands/bus');
 const mediadownloadHandler = require('./commands/mediadownloader');
+const groupfeaturesHandler = require('./commands/group-features');
 const { text } = require('express');
 
 const bot = new TelegramBot(botToken, { polling: true });
@@ -34,7 +35,7 @@ showallpdfHandler(bot);
 showsemesterpdfHandler(bot);
 busHandler(bot);
 mediadownloadHandler(bot);
-
+groupfeaturesHandler(bot);
 
 
 bot.on("photo", async (msg) => {
@@ -108,7 +109,7 @@ bot.on("message", async (msg) => {
 
   //check if the user is in the database in firebase
 
-  const userDoc = doc(db, "users", msg.from.id.toString());
+  const userDoc = doc(db, "demousers", msg.from.id.toString());
   const userSnapshot = await getDoc(userDoc);
 
   if (!userSnapshot.exists()) {
@@ -487,7 +488,7 @@ bot.onText(/\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id; // Get user's Telegram ID
   // Check if user already exists in the database
-  const userDoc = doc(db, "users", userId.toString());
+  const userDoc = doc(db, "demousers", userId.toString());
   const userSnapshot = await getDoc(userDoc);
 
   if (!userSnapshot.exists()) {
@@ -511,9 +512,9 @@ bot.onText(/\/start$/, async (msg) => {
   } else {
     const userData = userSnapshot.data();
 
-    if (userData.department === "") {
+    if (!userData.department) {
       addDepartment(chatId);
-    } else if (userData.semester === 0) {
+    } else if (!userData.semester) {
       addSemester(chatId);
     } else {
 
@@ -568,7 +569,7 @@ bot.on("callback_query", async (query) => {
   const data = query.data;
 
   // Update the user's department and semester in Firestore
-  const userDoc = doc(db, "users", userId.toString());
+  const userDoc = doc(db, "demousers", userId.toString());
 
   if (data.startsWith("semester_")) {
     const semester = data.replace("semester_", "");
