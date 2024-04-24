@@ -97,6 +97,14 @@ async function getGitHubRepoContentsbyquery(path, chatId) {
  bot.on('callback_query', async (query) => {
    const chatId = query.message.chat.id;
    const folderPath = query.data;
+
+   if (query.data.includes("bus")) {
+    return;
+  }
+  if(query.data.includes("download")) {
+    return;
+  }
+  
  
    if (folderPath === 'BACK') {
      // Extract the parent folder path

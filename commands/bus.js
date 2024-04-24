@@ -77,6 +77,12 @@ module.exports = async function(bot) {
 
 bot.on("callback_query", async (query) => {
     const chatId = query.message.chat.id;
+
+    if (!query.data.includes("bus")) {
+        return;
+    }
+
+    
     try {
         const chatId = query.message.chat.id;
         const busType = query.data;

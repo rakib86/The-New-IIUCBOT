@@ -12,7 +12,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const githubRepoURL = 'https://api.github.com/repos/rakib86/IIUCbot-DataBase';
 const expressApp = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 const firebaseConfig = {
     apiKey: "AIzaSyB-bER848mqiUbVXtl4l_tHl4YQ3ymNWMw",

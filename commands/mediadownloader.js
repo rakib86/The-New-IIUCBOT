@@ -82,7 +82,7 @@ if (youtubeShortsLink) {
             });
 
             // Remove the waiting sticker
-            bot.deleteMessage(chatId, stickerMessage.message_id);
+         
             
         } else {
             bot.sendMessage(chatId, 'Error: Unable to find suitable video format.');
@@ -90,6 +90,7 @@ if (youtubeShortsLink) {
     } catch (error) {
         console.error('Error downloading YouTube video:', error);
     }
+
   
     return;
 }
@@ -113,7 +114,6 @@ if (youtubeShortsLink) {
                     console.log("Error:", error);
                 });
 
-            bot.deleteMessage(chatId, stickerMessage.message_id);
 
             return;
         }
@@ -142,41 +142,78 @@ if (youtubeShortsLink) {
             bot.sendMessage(chatId, "Please provide a valid link");
             return;
         }
-        bot.sendMessage(chatId, "Please wait, I am fetching the media for you...");
         const link = msg.text;
 
-        const options = {
-            method: "POST",
-            url: "https://social-download-all-in-one.p.rapidapi.com/v1/social/autolink",
-            headers: {
-                "content-type": "application/json",
-                "X-RapidAPI-Key": "10ce9c4267msha639dae37dabea5p10164ejsn4ddf4732589b",
-                "X-RapidAPI-Host": "social-download-all-in-one.p.rapidapi.com",
-            },
-            data: {
-                url: link,
-            },
-        };
-
-        try {
-            const response = await axios.request(options);
-
-            bot.sendMessage(chatId, "Click the button below to download:", {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "Download",
-                                url: response.data.medias[0].url,
-                            },
-                        ],
+        bot.sendMessage(chatId, `Which Type of media do you want to download from this link?`, {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "Download HD Quality",
+                            callback_data: `download_video ${link}`,
+                        },
+                        {
+                            text: "Download Low Quality",
+                            callback_data: `download_videoLow ${link}`,
+                        },
+                        {
+                            text: "Download Audio Only",
+                            callback_data: `download_audio ${link}`,
+                        },
                     ],
-                },
-                reply_to_message_id: msg.message_id,
-            });
-        } catch (error) {
-            console.error(error);
-        }
+                ],
+            },
+        });
+
+
+
+
+        // const options = {
+        //     method: "POST",
+        //     url: "https://social-download-all-in-one.p.rapidapi.com/v1/social/autolink",
+        //     headers: {
+        //         "content-type": "application/json",
+        //         "X-RapidAPI-Key": "10ce9c4267msha639dae37dabea5p10164ejsn4ddf4732589b",
+        //         "X-RapidAPI-Host": "social-download-all-in-one.p.rapidapi.com",
+        //     },
+        //     data: {
+        //         url: link,
+        //     },
+        // };
+
+        // try {
+        //     const response = await axios.request(options);
+        
+        //     bot.sendMessage(chatId, "Click the button below to download:", {
+        //         reply_markup: {
+        //             inline_keyboard: [
+        //                 [
+        //                     {
+        //                         text: "Download HD",
+        //                         url: response.data.medias[1].url,
+        //                     },
+        
+        //                     {
+        //                         text: "Download is Low Quality",
+        //                         url: response.data.medias[0].url,
+        //                     },
+        //             ],
+        //         },
+        //         reply_to_message_id: msg.message_id,
+        //     });
+        // } catch (error) {
+        //     console.error(error);
+
+
+        // }
+
+
+
+      
+
+
+      
+           
     });
 };
 
