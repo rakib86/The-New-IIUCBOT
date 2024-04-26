@@ -57,8 +57,6 @@ bot.on('callback_query', async (query) => {
 });
 
 
-
-
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const username = msg.from.username;
